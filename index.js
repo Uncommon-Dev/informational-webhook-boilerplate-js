@@ -1,10 +1,13 @@
-var request = require('request');
+var axios = require('axios');
 require('dotenv').config();
+
+//The token in the .env file is not functional
+//Please make sure to replace with your real token!
 let BEARER_TOKEN = process.env.BEARER_TOKEN;
 
 async function main() {
 
-
+    //This JSON object is what will be sent to Discord through Whop
     let template = {
         "content": null,
         "embeds": [
@@ -19,36 +22,44 @@ async function main() {
         "attachments": []
     }
     
+    //This JSON object is what will represent a specific event
+    //Whop uses this to allow filtering on your data
     let someData = {
         someField: "testing",
         anotherField: "also testing",
         numberForFiltering: "2391230983459023"
     }
 
-    await sendToWhop({ data: someData, embed: template })
-    
+    //This function is responsible for sending the above data to Whop
+    let response = await sendToWhop({ data: someData, embed: template })
+    console.log(response)
 }
 
 async function sendToWhop(info) {
+
+    //These options set the request as a POST request,
+    //the url as the Whop provider endpoint, the authorization
+    //as the bearer token found in the .env file, and the body
+    //of the request as the data from the main() function.
     var options = {
       method: 'POST',
       url: `https://data.whop.com/provider`,
-      body: info,
+      data: info,
+      json: true,
       headers: {
         'content-type': 'application/json',
         'authorization': BEARER_TOKEN,
       },
     };
   
-    request(options, function (error, response, body) {
-      if (error || body == undefined) throw Error(error);
-      try {
-        body = JSON.parse(body);
-        return body;
-      } catch (error) {
-        throw Error(error);
-      }
-    });
+    let response
+    try {
+        response = await axios(options)
+    } catch (error) {
+        console.log(error)
+    }
+    return response.data
+       
 }
 
 main()
